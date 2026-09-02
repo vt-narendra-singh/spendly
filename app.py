@@ -66,7 +66,7 @@ def login():
         return render_template("login.html", error="Invalid email or password")
 
     session["user_id"] = user["id"]
-    return redirect(url_for("landing"))
+    return redirect(url_for("profile"))
 
 
 @app.route("/terms")
@@ -91,7 +91,50 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
+
+    user = {
+        "name": "Demo User",
+        "email": "demo@spendly.com",
+        "initials": "DU",
+        "member_since": "January 2025",
+    }
+
+    stats = [
+        {"label": "Total Spent", "value": "₹18,420"},
+        {"label": "Transactions", "value": "8"},
+        {"label": "Top Category", "value": "Food"},
+    ]
+
+    transactions = [
+        {"date": "2026-08-28", "description": "Grocery run - BigBasket", "category": "Food", "amount": "₹2,150"},
+        {"date": "2026-08-25", "description": "Uber to airport", "category": "Transport", "amount": "₹890"},
+        {"date": "2026-08-20", "description": "Electricity bill", "category": "Bills", "amount": "₹3,200"},
+        {"date": "2026-08-15", "description": "Pharmacy - Apollo", "category": "Health", "amount": "₹640"},
+        {"date": "2026-08-10", "description": "Movie night - PVR", "category": "Entertainment", "amount": "₹900"},
+        {"date": "2026-08-05", "description": "Amazon order - shoes", "category": "Shopping", "amount": "₹3,499"},
+        {"date": "2026-08-02", "description": "Dinner with friends", "category": "Food", "amount": "₹1,850"},
+        {"date": "2026-07-29", "description": "Misc. stationery", "category": "Other", "amount": "₹290"},
+    ]
+
+    categories = [
+        {"name": "Food", "amount": "₹4,000", "percent": 25, "bar_class": "mock-bar-food"},
+        {"name": "Bills", "amount": "₹3,200", "percent": 20, "bar_class": "mock-bar-bills"},
+        {"name": "Shopping", "amount": "₹3,499", "percent": 20, "bar_class": "mock-bar-shopping"},
+        {"name": "Transport", "amount": "₹890", "percent": 10, "bar_class": "mock-bar-transport"},
+        {"name": "Entertainment", "amount": "₹900", "percent": 10, "bar_class": "mock-bar-entertainment"},
+        {"name": "Health", "amount": "₹640", "percent": 10, "bar_class": "mock-bar-health"},
+        {"name": "Other", "amount": "₹290", "percent": 5, "bar_class": "mock-bar-other"},
+    ]
+
+    return render_template(
+        "profile.html",
+        user=user,
+        stats=stats,
+        transactions=transactions,
+        categories=categories,
+    )
 
 
 @app.route("/expenses/add")

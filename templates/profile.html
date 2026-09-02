@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+  <div class="profile-inner">
+
+    <div class="profile-card profile-card--user">
+      <div class="avatar-circle">{{ user.initials }}</div>
+      <div class="profile-info">
+        <h1 class="profile-name">{{ user.name }}</h1>
+        <p class="profile-email">{{ user.email }}</p>
+        <p class="profile-member-since">Member since {{ user.member_since }}</p>
+      </div>
+    </div>
+
+    <div class="profile-stats-row">
+      {% for stat in stats %}
+      <div class="mock-stat">
+        <span class="mock-stat-label">{{ stat.label }}</span>
+        <span class="mock-stat-value">{{ stat.value }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="profile-card">
+      <h2 class="profile-section-title">Transaction History</h2>
+      <table class="profile-table">
+        <thead>
+          <tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th></tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td>{{ tx.date }}</td>
+            <td>{{ tx.description }}</td>
+            <td><span class="badge badge-{{ tx.category|lower }}">{{ tx.category }}</span></td>
+            <td>{{ tx.amount }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="profile-card">
+      <h2 class="profile-section-title">Category Breakdown</h2>
+      <ul class="category-breakdown-list">
+        {% for cat in categories %}
+        <li class="category-breakdown-item">
+          <div class="category-breakdown-header">
+            <span>{{ cat.name }}</span>
+            <span>{{ cat.amount }}</span>
+          </div>
+          <div class="mock-bar-track">
+            <div class="mock-bar {{ cat.bar_class }} mock-bar-width--{{ cat.percent }}"></div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
