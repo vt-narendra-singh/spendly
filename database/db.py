@@ -4,7 +4,7 @@ from datetime import date
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
-DB_PATH = os.path.normpath(
+DB_PATH = os.environ.get("SPENDLY_DB_PATH") or os.path.normpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "expense_tracker.db")
 )
 

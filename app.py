@@ -1,6 +1,12 @@
 from flask import Flask, redirect, render_template, request, session, url_for
 
 from database.db import create_user, get_db, get_user_by_email, init_db, seed_db, verify_user
+from database.queries import (
+    get_category_breakdown,
+    get_recent_transactions,
+    get_summary_stats,
+    get_user_by_id,
+)
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret-key-change-in-production"  # dev-only; replace before deploying
@@ -94,38 +100,45 @@ def profile():
     if not session.get("user_id"):
         return redirect(url_for("login"))
 
+    user_id = session["user_id"]
+    user_row = get_user_by_id(user_id)
+
+    initials = "".join(part[0] for part in user_row["name"].split()[:2]).upper()
     user = {
-        "name": "Demo User",
-        "email": "demo@spendly.com",
-        "initials": "DU",
-        "member_since": "January 2025",
+        "name": user_row["name"],
+        "email": user_row["email"],
+        "initials": initials,
+        "member_since": user_row["member_since"],
     }
 
-    stats = [
-        {"label": "Total Spent", "value": "₹18,420"},
-        {"label": "Transactions", "value": "8"},
-        {"label": "Top Category", "value": "Food"},
-    ]
-
+    # === SUBAGENT-1: transaction history ===
     transactions = [
-        {"date": "2026-08-28", "description": "Grocery run - BigBasket", "category": "Food", "amount": "₹2,150"},
-        {"date": "2026-08-25", "description": "Uber to airport", "category": "Transport", "amount": "₹890"},
-        {"date": "2026-08-20", "description": "Electricity bill", "category": "Bills", "amount": "₹3,200"},
-        {"date": "2026-08-15", "description": "Pharmacy - Apollo", "category": "Health", "amount": "₹640"},
-        {"date": "2026-08-10", "description": "Movie night - PVR", "category": "Entertainment", "amount": "₹900"},
-        {"date": "2026-08-05", "description": "Amazon order - shoes", "category": "Shopping", "amount": "₹3,499"},
-        {"date": "2026-08-02", "description": "Dinner with friends", "category": "Food", "amount": "₹1,850"},
-        {"date": "2026-07-29", "description": "Misc. stationery", "category": "Other", "amount": "₹290"},
+        {
+            "date": tx["date"],
+            "description": tx["description"],
+            "category": tx["category"],
+            "amount": f"₹{tx['amount']:,.2f}",
+        }
+        for tx in get_recent_transactions(user_id)
     ]
 
+    # === SUBAGENT-2: summary stats ===
+    summary = get_summary_stats(user_id)
+    stats = [
+        {"label": "Total Spent", "value": f"₹{summary['total_spent']:,.2f}"},
+        {"label": "Transactions", "value": str(summary["transaction_count"])},
+        {"label": "Top Category", "value": summary["top_category"]},
+    ]
+
+    # === SUBAGENT-3: category breakdown ===
     categories = [
-        {"name": "Food", "amount": "₹4,000", "percent": 25, "bar_class": "mock-bar-food"},
-        {"name": "Bills", "amount": "₹3,200", "percent": 20, "bar_class": "mock-bar-bills"},
-        {"name": "Shopping", "amount": "₹3,499", "percent": 20, "bar_class": "mock-bar-shopping"},
-        {"name": "Transport", "amount": "₹890", "percent": 10, "bar_class": "mock-bar-transport"},
-        {"name": "Entertainment", "amount": "₹900", "percent": 10, "bar_class": "mock-bar-entertainment"},
-        {"name": "Health", "amount": "₹640", "percent": 10, "bar_class": "mock-bar-health"},
-        {"name": "Other", "amount": "₹290", "percent": 5, "bar_class": "mock-bar-other"},
+        {
+            "name": cat["name"],
+            "amount": f"₹{cat['amount']:,.2f}",
+            "percent": cat["pct"],
+            "bar_class": f"mock-bar-{cat['name'].lower()}",
+        }
+        for cat in get_category_breakdown(user_id)
     ]
 
     return render_template(
